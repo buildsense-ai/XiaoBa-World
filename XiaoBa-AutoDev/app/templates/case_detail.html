@@ -58,9 +58,9 @@
             <span class="chain-node-count">{{ stage.artifact_count }}</span>
           </div>
           <p class="chain-node-desc">{{ stage.summary }}</p>
-          {% if stage.items %}
+          {% if stage["items"] %}
           <div class="chain-artifacts">
-            {% for artifact in stage.items %}
+            {% for artifact in stage["items"] %}
             <article class="artifact-row">
               <div class="artifact-row-left">
                 <a class="artifact-title" href="{{ artifact.download_url }}">{{ artifact.title }}</a>

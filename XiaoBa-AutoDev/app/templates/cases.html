@@ -61,10 +61,10 @@
     <div class="kanban-col-head">
       <span class="col-dot {{ column.dot_class }}"></span>
       <h2>{{ column.title }}</h2>
-      <span class="col-count">{{ column.items|length }}</span>
+      <span class="col-count">{{ column["items"]|length }}</span>
     </div>
     <div class="kanban-col-body">
-      {% for item in column.items %}
+      {% for item in column["items"] %}
       <a class="case-card{% if item.status == 'closed' %} case-card-closed{% endif %}" href="/cases/{{ item.case_id }}">
         <div class="case-card-top">
           <span class="case-id-label">{{ item.case_id }}</span>

@@ -66,7 +66,16 @@ templates = Jinja2Templates(directory=str(ROOT_DIR / "app" / "templates"))
 
 def render(template_name: str, request: Request, context: dict[str, Any]) -> HTMLResponse:
     payload = {"request": request, **context}
-    return templates.TemplateResponse(template_name, payload)
+    # Starlette changed TemplateResponse to require request-first arguments
+    # in newer releases. Keep a fallback for older versions.
+    try:
+        return templates.TemplateResponse(
+            request=request,
+            name=template_name,
+            context=payload,
+        )
+    except TypeError:
+        return templates.TemplateResponse(template_name, payload)
 
 
 def parse_json_text(raw_text: str | None, fallback: Any) -> Any:
