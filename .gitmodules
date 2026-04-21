@@ -1,0 +1,4 @@
+[submodule "XiaoBa-CLI"]
+	path = XiaoBa-CLI
+	url = https://github.com/buildsense-ai/XiaoBa-CLI.git
+	branch = main

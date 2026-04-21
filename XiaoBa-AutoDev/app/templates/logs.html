@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Log Archive | XiaoBa-AutoDev{% endblock %}
+{% block content %}
+
+<section class="hero-card">
+  <div>
+    <p class="eyebrow">Log Archive</p>
+    <h1>Session Logs First</h1>
+    <p class="hero-text">日志现在是 AutoDev 的一等公民。每条会话日志都直接对应 MinIO 对象，文件名可点击下载，页面优先展示 session 来源和存储定位。</p>
+  </div>
+  <div class="stat-grid">
+    <article class="stat-card">
+      <span>Total Logs</span>
+      <strong>{{ stats.total_logs }}</strong>
+    </article>
+    <article class="stat-card">
+      <span>Sessions</span>
+      <strong>{{ stats.unique_sessions }}</strong>
+    </article>
+    <article class="stat-card">
+      <span>Archive Size</span>
+      <strong>{{ stats.total_size_label }}</strong>
+    </article>
+    <article class="stat-card">
+      <span>Latest Upload</span>
+      <strong>{{ stats.latest_upload[:19] if stats.latest_upload else "-" }}</strong>
+    </article>
+  </div>
+</section>
+
+<div class="filter-bar card">
+  <form method="get" action="/logs" class="filter-form">
+    <input name="session_type" value="{{ filters.session_type }}" placeholder="session_type (feishu, weixin...)" onblur="this.form.submit()">
+    <input name="session_id" value="{{ filters.session_id }}" placeholder="session_id (user:ou_xxx)" onblur="this.form.submit()">
+    <input name="log_date" value="{{ filters.log_date }}" placeholder="date (2026-04-20)" onblur="this.form.submit()">
+    {% if filters.session_type or filters.session_id or filters.log_date %}
+    <a class="ghost-btn" href="/logs">Clear</a>
+    {% endif %}
+  </form>
+</div>
+
+<div class="card">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Filename</th>
+          <th>Source</th>
+          <th>Size</th>
+          <th>Uploaded</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in logs %}
+        <tr>
+          <td>
+            <a class="case-link" href="/logs/{{ item.log_id }}">{{ item.filename }}</a>
+            <div class="table-subline"><a class="table-inline-link" href="{{ item.download_url }}">Download raw file</a></div>
+          </td>
+          <td>
+            <span class="tag">{{ item.session_type }}</span>
+            <div class="table-subline mono">{{ item.session_id }}</div>
+            <div class="table-note">{{ item.log_date }}</div>
+          </td>
+          <td>{{ item.size_label }}</td>
+          <td>{{ item.uploaded_at[:19] if item.uploaded_at else '-' }}</td>
+          <td><a class="ghost-btn inline-action" href="{{ item.download_url }}">Download</a></td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="5" class="empty-cell">No logs yet. Runtime will upload automatically.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

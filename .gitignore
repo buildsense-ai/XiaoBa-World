@@ -1,0 +1,54 @@
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Secrets and local config
+.env
+.env.*
+!.env.example
+!.env.sample
+**/.env
+**/.env.*
+!**/.env.example
+!**/.env.sample
+
+# Python
+**/__pycache__/
+**/*.pyc
+.venv/
+venv/
+
+# Node / build outputs
+**/node_modules/
+**/dist/
+**/release/
+**/.tmp/
+**/.tmp-test-build/
+**/tmp/
+
+# Runtime data
+**/logs/
+**/turnLogs/
+XiaoBa-AutoDev/data/
+XiaoBa-CLI/data/
+XiaoBa-CLI/files/
+XiaoBa-CLI/memory/
+XiaoBa-CLI/runtime-pr/
+
+# Generated packages and archives
+*.log
+*.zip
+*.dmg
+*.exe
+*.app
+*.deb
+*.rpm
+*.AppImage
+
+# OS / editor swap
+*.tmp
+*.temp
+*.swp
+*.swo
+*~

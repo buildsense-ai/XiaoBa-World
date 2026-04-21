@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+{% block title %}{{ case.title }} | XiaoBa-AutoDev{% endblock %}
+{% block content %}
+
+<section class="hero-card compact">
+  <div>
+    <p class="eyebrow"><a class="back-link" href="/cases">Case Board</a> / {{ case.case_id }}</p>
+    <h1>{{ case.title }}</h1>
+    <p class="hero-text">{{ case.summary or "这个 case 还没有补充 summary。" }}</p>
+    <div class="hero-actions">
+      {% if latest_patch %}
+      <a class="primary-btn" href="{{ latest_patch.download_url }}">Download Patch</a>
+      {% endif %}
+      {% if metrics_artifact %}
+      <a class="secondary-btn" href="{{ metrics_artifact.download_url }}">Loop Metrics</a>
+      {% endif %}
+      {% if writeback_result_artifact %}
+      <a class="ghost-btn" href="{{ writeback_result_artifact.download_url }}">Writeback Result</a>
+      {% endif %}
+    </div>
+  </div>
+  <div class="summary-grid">
+    <article>
+      <span>Status</span>
+      <strong>{{ case.status }}</strong>
+    </article>
+    <article>
+      <span>Owner</span>
+      <strong>{{ case.current_owner_agent or "-" }}</strong>
+    </article>
+    <article>
+      <span>Artifacts</span>
+      <strong>{{ metrics.artifact_count }}</strong>
+    </article>
+    <article>
+      <span>Events</span>
+      <strong>{{ metrics.event_count }}</strong>
+    </article>
+  </div>
+</section>
+
+<section class="detail-layout">
+  <div class="card">
+    <div class="chain-timeline-head">
+      <h2>Artifact Chain</h2>
+      <p>按 stage 看 Inspector、Engineer、Reviewer 交付了什么，以及 closure / writeback 数据落到了哪里。</p>
+    </div>
+    <div class="chain-timeline">
+      {% for stage in chain %}
+      <section class="chain-node{% if not stage.has_items %} chain-node-empty{% endif %}">
+        <div class="chain-node-rail">
+          <div class="chain-node-dot {% if stage.has_items %}dot-active{% endif %}">{{ stage.sequence }}</div>
+          {% if not loop.last %}<div class="chain-node-line"></div>{% endif %}
+        </div>
+        <div class="chain-node-body">
+          <div class="chain-node-header">
+            <h3>{{ stage.label }}</h3>
+            <span class="chain-node-count">{{ stage.artifact_count }}</span>
+          </div>
+          <p class="chain-node-desc">{{ stage.summary }}</p>
+          {% if stage.items %}
+          <div class="chain-artifacts">
+            {% for artifact in stage.items %}
+            <article class="artifact-row">
+              <div class="artifact-row-left">
+                <a class="artifact-title" href="{{ artifact.download_url }}">{{ artifact.title }}</a>
+                <span class="tag">{{ artifact.type }}</span>
+                {% if artifact.format %}<span class="tag">{{ artifact.format }}</span>{% endif %}
+              </div>
+              <div class="artifact-meta-line">
+                {{ artifact.produced_by_agent or "system" }} · v{{ artifact.version }} · {{ artifact.created_at[:19] if artifact.created_at else "-" }}
+              </div>
+              {% if artifact.preview_text %}
+              <details class="artifact-preview-toggle">
+                <summary>Preview</summary>
+                <pre class="artifact-preview">{{ artifact.preview_text }}</pre>
+              </details>
+              {% endif %}
+            </article>
+            {% endfor %}
+          </div>
+          {% else %}
+          <div class="kanban-empty">No artifacts yet.</div>
+          {% endif %}
+        </div>
+      </section>
+      {% endfor %}
+    </div>
+  </div>
+
+  <aside class="detail-sidebar">
+    <div class="card">
+      <div class="card-head">
+        <h2>Case Metadata</h2>
+        <p>案件基本信息和当前协作上下文。</p>
+      </div>
+      <dl class="detail-list">
+        <div><dt>Case ID</dt><dd class="mono">{{ case.case_id }}</dd></div>
+        <div><dt>Category</dt><dd>{{ case.category or "-" }}</dd></div>
+        <div><dt>Priority</dt><dd>{{ case.priority or "-" }}</dd></div>
+        <div><dt>Recommended</dt><dd>{{ case.recommended_next_action or "-" }}</dd></div>
+        <div><dt>Created</dt><dd>{{ case.created_at[:19] if case.created_at else "-" }}</dd></div>
+        <div><dt>Updated</dt><dd>{{ case.updated_at[:19] if case.updated_at else "-" }}</dd></div>
+        <div><dt>Workdir</dt><dd class="mono">{{ case.workdir_path }}</dd></div>
+      </dl>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h2>Loop Metrics</h2>
+        <p>闭环时长、重开次数和 writeback 状态。</p>
+      </div>
+      <dl class="detail-list">
+        {% for label, value in loop_metric_rows %}
+        <div><dt>{{ label }}</dt><dd>{{ value }}</dd></div>
+        {% endfor %}
+      </dl>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h2>Writeback</h2>
+        <p>Reviewer 生成的回写计划和实际执行结果。</p>
+      </div>
+      {% if writeback_plan_payload %}
+      <p class="table-note">{{ writeback_plan_payload.reason or "No writeback reason provided." }}</p>
+      <div class="event-log">
+        {% for action in writeback_actions %}
+        <div class="event-body">
+          <div class="event-header">
+            <strong>{{ action.action }}</strong>
+            <span>{{ action.target }}</span>
+            <span>{{ action.applyMode or "manual" }}</span>
+          </div>
+          <p class="table-note">{{ action.summary }}</p>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="empty-cell">No writeback plan artifact yet.</p>
+      {% endif %}
+
+      {% if writeback_result_payload %}
+      <div class="card-head" style="margin-top: 18px;">
+        <h2 style="font-size: 18px;">Execution Result</h2>
+      </div>
+      <div class="event-log">
+        {% for item in writeback_results %}
+        <div class="event-body">
+          <div class="event-header">
+            <strong>{{ item.action }}</strong>
+            <span>{{ item.target }}</span>
+            <span>{{ item.status }}</span>
+          </div>
+          <p class="table-note">{{ item.detail }}</p>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+
+    {% if implementation_summary_payload %}
+    <div class="card">
+      <div class="card-head">
+        <h2>Implementation Summary</h2>
+      </div>
+      <pre class="artifact-preview">{{ implementation_summary_pretty }}</pre>
+    </div>
+    {% endif %}
+
+    {% if review_summary_payload %}
+    <div class="card">
+      <div class="card-head">
+        <h2>Reviewer Summary</h2>
+      </div>
+      <pre class="artifact-preview">{{ review_summary_pretty }}</pre>
+    </div>
+    {% endif %}
+
+    {% if related_logs %}
+    <div class="card">
+      <div class="card-head">
+        <h2>Related Logs</h2>
+        <p>同一个 session 下可追溯的原始日志。</p>
+      </div>
+      <div class="event-log">
+        {% for item in related_logs %}
+        <a class="event-body related-log-link" href="/logs/{{ item.log_id }}">
+          <strong class="case-link">{{ item.filename }}</strong>
+          <div class="table-subline">{{ item.log_date }} · {{ item.size_label }}</div>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </aside>
+</section>
+
+<div class="card">
+  <div class="card-head">
+    <h2>Event Timeline</h2>
+    <p>状态迁移、artifact 追加和 reviewer writeback 事件都在这里。</p>
+  </div>
+  <div class="event-log">
+    {% for event in events_view %}
+    <article class="event-item">
+      <span class="event-dot"></span>
+      <div class="event-body">
+        <div class="event-header">
+          <strong>{{ event.kind }}</strong>
+          <span>{{ event.actor_type }} / {{ event.actor_id }}</span>
+          <time>{{ event.created_at[:19] if event.created_at else "-" }}</time>
+        </div>
+        <pre class="event-payload">{{ event.payload_pretty }}</pre>
+      </div>
+    </article>
+    {% else %}
+    <p class="empty-cell">No events yet.</p>
+    {% endfor %}
+  </div>
+</div>
+
+{% endblock %}

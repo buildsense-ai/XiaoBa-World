@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% block title %}{{ log.filename }} | XiaoBa-AutoDev{% endblock %}
+{% block content %}
+
+<section class="hero-card compact">
+  <div>
+    <p class="eyebrow"><a class="back-link" href="/logs">Log Archive</a> / Session Log</p>
+    <h1>{{ log.filename }}</h1>
+    <p class="hero-text">这条 session log 是后续所有 agent 卡片的根记录。先看原始上下文，再在同一条日志上挂 inspector / engineer / reviewer 的结构化产出。</p>
+    <div class="hero-actions">
+      <a class="primary-btn" href="{{ log.download_url }}">Download Log</a>
+    </div>
+  </div>
+  <div class="summary-grid">
+    <article>
+      <span>Session Type</span>
+      <strong>{{ log.session_type }}</strong>
+    </article>
+    <article>
+      <span>Session ID</span>
+      <strong class="mono">{{ log.session_id }}</strong>
+    </article>
+    <article>
+      <span>Log Date</span>
+      <strong>{{ log.log_date }}</strong>
+    </article>
+    <article>
+      <span>Archive Size</span>
+      <strong>{{ log.size_label }}</strong>
+    </article>
+  </div>
+</section>
+
+<section class="panel two-col">
+  <div class="card">
+    <div class="card-head">
+      <h2>Log Summary</h2>
+      <p>按条目类型快速确认这条 session log 的信号密度。</p>
+    </div>
+    <div class="summary-grid">
+      <article>
+        <span>Total Entries</span>
+        <strong>{{ analysis.total_entries }}</strong>
+      </article>
+      <article>
+        <span>Runtime Entries</span>
+        <strong>{{ analysis.runtime_entries }}</strong>
+      </article>
+      <article>
+        <span>Turn Entries</span>
+        <strong>{{ analysis.turn_entries }}</strong>
+      </article>
+      <article>
+        <span>Parse Errors</span>
+        <strong>{{ analysis.parse_errors }}</strong>
+      </article>
+    </div>
+    <dl class="detail-list detail-list-compact">
+      <div><dt>Uploaded</dt><dd>{{ log.uploaded_at[:19] if log.uploaded_at else '-' }}</dd></div>
+      <div><dt>First Timestamp</dt><dd>{{ analysis.first_timestamp or '-' }}</dd></div>
+      <div><dt>Last Timestamp</dt><dd>{{ analysis.last_timestamp or '-' }}</dd></div>
+    </dl>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h2>Related Logs</h2>
+      <p>同一个 session 下最近上传的其他日志文件。</p>
+    </div>
+    <div class="event-log">
+      {% for item in related_logs %}
+      <a class="event-body related-log-link" href="/logs/{{ item.log_id }}">
+        <strong class="case-link">{{ item.filename }}</strong>
+        <div class="table-subline">{{ item.log_date }} · {{ item.size_label }}</div>
+      </a>
+      {% else %}
+      <p class="empty-cell">No sibling logs in this session.</p>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<div class="card">
+  <div class="card-head">
+    <h2>Agent Cards</h2>
+    <p>后续不再从 case 出发，而是围绕这条 log 逐步生成 agent 卡片。</p>
+  </div>
+  <div class="agent-card-grid">
+    {% for card in agent_cards %}
+    <article class="agent-card-panel">
+      <div class="spotlight-top">
+        <span class="tag">{{ card.agent }}</span>
+      </div>
+      <h3>{{ card.title }}</h3>
+      <p>{{ card.summary }}</p>
+      {% if card['items'] %}
+      <div class="event-log">
+        {% for item in card['items'] %}
+        <div class="event-body">
+          <div class="event-meta">
+            <span class="tag severity-{{ item.severity or 'info' }}">{{ item.card_type }}</span>
+            {% if item.severity %}<span class="tag">{{ item.severity }}</span>{% endif %}
+            {% if item.status %}<span class="tag">{{ item.status }}</span>{% endif %}
+          </div>
+          <strong>{{ item.title }}</strong>
+          {% if item.summary %}<p>{{ item.summary }}</p>{% endif %}
+          {% if item.payload and item.payload.report_markdown %}
+          <details>
+            <summary>查看完整报告</summary>
+            <pre class="artifact-preview">{{ item.payload.report_markdown }}</pre>
+          </details>
+          {% endif %}
+          <div class="table-subline">{{ item.created_at[:19] if item.created_at else '' }}</div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state compact-empty">
+        <div>
+          <strong>No cards yet</strong>
+          <p>这个区域后续直接挂在当前 log 上，不再经过 case 视图。</p>
+        </div>
+      </div>
+      {% endif %}
+    </article>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-head">
+    <h2>Raw Log Preview</h2>
+    <p>保留原始 `.jsonl` 预览，方便先从 runtime / turn 全量日志还原上下文。</p>
+  </div>
+  {% if preview_text %}
+  <pre class="artifact-preview log-preview">{{ preview_text }}</pre>
+  {% if preview_truncated %}
+  <p class="table-note">Preview truncated. Download the full file for complete content.</p>
+  {% endif %}
+  {% else %}
+  <p class="empty-cell">No preview available.</p>
+  {% endif %}
+</div>
+
+{% endblock %}

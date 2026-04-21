@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Case Board | XiaoBa-AutoDev{% endblock %}
+{% block content %}
+
+<section class="hero-card">
+  <div>
+    <p class="eyebrow">Case Board</p>
+    <h1>Inspector → Engineer → Reviewer</h1>
+    <p class="hero-text">这里是 AutoDev 的主飞轮视图。日志进入系统后，案件在 Inspector、Engineer、Reviewer 三条 lane 中流转，最终沉淀为 closure、writeback 和 loop metrics。</p>
+  </div>
+  <div class="stat-grid">
+    <article class="stat-card">
+      <span>Total Cases</span>
+      <strong>{{ stats.total_cases }}</strong>
+    </article>
+    <article class="stat-card">
+      <span>Active Cases</span>
+      <strong>{{ stats.active_cases }}</strong>
+    </article>
+    <article class="stat-card">
+      <span>Reviewing</span>
+      <strong>{{ stats.reviewing_cases }}</strong>
+    </article>
+    <article class="stat-card">
+      <span>Closed</span>
+      <strong>{{ stats.closed_cases }}</strong>
+    </article>
+  </div>
+</section>
+
+<div class="filter-bar card">
+  <form method="get" action="/cases" class="filter-form">
+    <input name="q" value="{{ filters.q }}" placeholder="search case_id / title / summary" onblur="this.form.submit()">
+    <select name="status" onchange="this.form.submit()">
+      <option value="">All status</option>
+      {% for item in status_options %}
+      <option value="{{ item }}" {% if filters.status == item %}selected{% endif %}>{{ item }}</option>
+      {% endfor %}
+    </select>
+    <select name="owner" onchange="this.form.submit()">
+      <option value="">All owners</option>
+      {% for item in owner_options %}
+      <option value="{{ item }}" {% if filters.owner == item %}selected{% endif %}>{{ item }}</option>
+      {% endfor %}
+    </select>
+    <select name="category" onchange="this.form.submit()">
+      <option value="">All categories</option>
+      {% for item in category_options %}
+      <option value="{{ item }}" {% if filters.category == item %}selected{% endif %}>{{ item }}</option>
+      {% endfor %}
+    </select>
+    {% if filters.q or filters.status or filters.owner or filters.category %}
+    <a class="ghost-btn" href="/cases">Clear</a>
+    {% endif %}
+  </form>
+</div>
+
+<section class="kanban-board">
+  {% for column in columns %}
+  <article class="kanban-col">
+    <div class="kanban-col-head">
+      <span class="col-dot {{ column.dot_class }}"></span>
+      <h2>{{ column.title }}</h2>
+      <span class="col-count">{{ column.items|length }}</span>
+    </div>
+    <div class="kanban-col-body">
+      {% for item in column.items %}
+      <a class="case-card{% if item.status == 'closed' %} case-card-closed{% endif %}" href="/cases/{{ item.case_id }}">
+        <div class="case-card-top">
+          <span class="case-id-label">{{ item.case_id }}</span>
+          <span class="pill state-{{ item.status }}">{{ item.status }}</span>
+        </div>
+        <h3>{{ item.title }}</h3>
+        <p class="case-card-summary">{{ item.summary or "No summary yet." }}</p>
+        <div class="case-card-meta">
+          {% if item.category %}<span class="tag">{{ item.category }}</span>{% endif %}
+          {% if item.current_owner_agent %}<span class="tag">{{ item.current_owner_agent }}</span>{% endif %}
+          {% if item.priority %}<span class="tag">{{ item.priority }}</span>{% endif %}
+        </div>
+        <div class="case-card-footer">
+          <span>{{ item.updated_at[:19] if item.updated_at else "-" }}</span>
+          <span>{{ item.recommended_next_action or "—" }}</span>
+        </div>
+      </a>
+      {% else %}
+      <div class="kanban-empty">No cases in this lane.</div>
+      {% endfor %}
+    </div>
+  </article>
+  {% endfor %}
+</section>
+
+{% endblock %}

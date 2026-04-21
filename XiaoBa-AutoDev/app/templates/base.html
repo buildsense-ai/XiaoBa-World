@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}XiaoBa-AutoDev{% endblock %}</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <div class="ambient"></div>
+  <header class="topbar">
+    <a class="brand" href="/">
+      <span class="brand-mark">XA</span>
+      <span>
+        <strong>XiaoBa-AutoDev</strong>
+        <small>Log-first automation platform</small>
+      </span>
+    </a>
+    <div class="topbar-meta">
+      <a href="/cases" class="topbar-link{% if request.url.path.startswith('/cases') %} is-active{% endif %}">Case Board</a>
+      <a href="/logs" class="topbar-link{% if request.url.path.startswith('/logs') %} is-active{% endif %}">Log Archive</a>
+    </div>
+  </header>
+  <main class="page-shell">
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>
