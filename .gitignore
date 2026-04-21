@@ -13,6 +13,9 @@ Thumbs.db
 !**/.env.example
 !**/.env.sample
 
+# Keep old nested git metadata local only
+**/.git-local-backup/
+
 # Python
 **/__pycache__/
 **/*.pyc
